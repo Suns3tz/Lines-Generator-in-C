@@ -6,6 +6,10 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 
+// Funciones implementadas en NASM
+extern void oct1(int x0, int y0, int x1, int y1);
+
+
 typedef struct {
   double r;
   double g;
@@ -82,5 +86,39 @@ void IncrVerTwoPure (int x0, int y0, int x1, int y1) {
   x+=paso_x;
   y+=paso_y;
   }
+}
+
+void bresenham_nasm(int x0, int y0, int x1, int y1){
+    int dx = x1 - x0;
+    int dy = y1 - y0;
+
+    if (dx >= 0 && dy >= 0) {
+
+        if (dx >= dy)
+            oct1(x0, y0, x1, y1);
+        else
+            oct2(x0, y0, x1, y1);
+
+    } else if (dx < 0 && dy >= 0) {
+
+        if (-dx <= dy)
+            oct3(x0, y0, x1, y1);
+        else
+            oct4(x0, y0, x1, y1);
+
+    } else if (dx < 0 && dy < 0) {
+
+        if (-dx >= -dy)
+            oct5(x0, y0, x1, y1);
+        else
+            oct6(x0, y0, x1, y1);
+
+    } else {
+
+        if (dx <= -dy)
+            oct7(x0, y0, x1, y1);
+        else
+            oct8(x0, y0, x1, y1);
+    }
 }
 
