@@ -35,9 +35,10 @@ static LINE *lines;
 
 static int display_stage = 0;
 static int brute_measured = 0;
-static int nasm_measured = 0;
 static int inc_ver_one_measured = 0;
 static int inc_ver_two_measured = 0;
+static int bresenham_c_measured = 0;
+static int nasm_measured = 0;
 
 // Prototipos
 void cleanup(void);
@@ -54,6 +55,8 @@ int BresenhamNASM(int x0, int y0, int x1, int y1);
 
 void emit_brute_lines(void);
 void emit_nasm_lines(void);
+void emit_inc_ver1_lines(void);
+void emit_inc_ver2_lines(void);
 void advance_stage(int value);
 
 double elapsed_time(
@@ -62,6 +65,8 @@ double elapsed_time(
 );
 
 double benchmark_brute_graphics(void);
+double benchmark_inc_ver1_graphics(void);
+double benchmark_inc_ver2_graphics(void);
 double benchmark_nasm_graphics(void);
 
 void draw_scene(void);
@@ -184,9 +189,11 @@ double elapsed_time(struct timespec start, struct timespec end) {
 void advance_stage(int value) {
     (void)value;
 
-    display_stage = 1;
-    // Solicitar una nueva llamada a draw_scene()
-    glutPostRedisplay();
+    if (display_stage < 4) {
+        display_stage++;
+
+        glutPostRedisplay();
+    }
 }
 
 // Algoritmo de Fuerza Bruta
@@ -270,7 +277,7 @@ void IncrVerOnePure(int x0, int y0, int x1, int y1){
   
   long double m = (long double)(y1-y0)/(x1-x0);
   
-  if (fabsl(m) <= 1,0) {
+  if (fabsl(m) <= 1.0) {
     long double y = y0;
     int x = x0;
     for (x = x0; x<= x1 ; x++){
@@ -291,7 +298,7 @@ void IncrVerOnePure(int x0, int y0, int x1, int y1){
   }
 }
 
-void IncrVerTwoPure (int x0, int y0, int x1, int y1) {
+void IncrVerTwoPure(int x0, int y0, int x1, int y1) {
   long double x,y, paso_x, paso_y;
   int ancho;
   ancho = max(abs(x1-x0), abs(y1-y0));
@@ -497,8 +504,7 @@ void emit_brute_lines(void) {
 }
 
 // Mostrar lineas - Inc Ver 1
-void emit_inc_ver1_lines(void)
-{
+void emit_inc_ver1_lines(void) {
     for (int i = 0; i < lines_num; i++) {
         IncrVerOnePure(
             lines[i].x0,
@@ -510,8 +516,7 @@ void emit_inc_ver1_lines(void)
 }
 
 // Mostrar lineas - Inc Ver 2
-void emit_inc_ver2_lines(void)
-{
+void emit_inc_ver2_lines(void) {
     for (int i = 0; i < lines_num; i++) {
         IncrVerTwoPure(
             lines[i].x0,
@@ -523,8 +528,7 @@ void emit_inc_ver2_lines(void)
 }
 
 // Mostrar lineas - Bresenham NASM
-void emit_nasm_lines(void)
-{
+void emit_nasm_lines(void) {
     for (int i = 0; i < lines_num; i++) {
         BresenhamNASM(
             lines[i].x0,
@@ -550,6 +554,58 @@ double benchmark_brute_graphics(void) {
     for (int repetition = 0; repetition < quantity; repetition++) {
 
         emit_brute_lines();
+    }
+
+    glEnd();
+    // Garantiza que OpenGL terminó de procesar todos los puntos
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    return elapsed_time(start, end);
+}
+
+// Medir tiempo - Inc Ver 1
+double benchmark_inc_ver1_graphics(void) {
+    struct timespec start;
+    struct timespec end;
+
+    // Espera cualquier trabajo anterior antes de comenzar a medir
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    glBegin(GL_POINTS);
+
+    for (int repetition = 0; repetition < quantity; repetition++) {
+
+        emit_inc_ver1_lines();
+    }
+
+    glEnd();
+    // Garantiza que OpenGL terminó de procesar todos los puntos
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    return elapsed_time(start, end);
+}
+
+// Medir tiempo - Inc Ver 2
+double benchmark_inc_ver2_graphics(void) {
+    struct timespec start;
+    struct timespec end;
+
+    // Espera cualquier trabajo anterior antes de comenzar a medir
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    glBegin(GL_POINTS);
+
+    for (int repetition = 0; repetition < quantity; repetition++) {
+
+        emit_inc_ver2_lines();
     }
 
     glEnd();
@@ -593,48 +649,130 @@ double benchmark_nasm_graphics(void) {
 void draw_scene(void) {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // ETAPA 0: Mostrar solamente Fuerza Bruta
+    /*
+     * ETAPA 0: Fuerza Bruta
+     * Siempre debe reconstruirse porque glClear()
+     * borró la ventana.
+     */
+    // Rojo
+    glColor3f(1.0f, 0.0f, 0.0f);
+
+    if (!brute_measured) {
+        double brute_time =
+            benchmark_brute_graphics();
+
+        printf(
+            "Fuerza Bruta con dibujo: %.9f segundos\n",
+            brute_time
+        );
+
+        brute_measured = 1;
+
+        // Tiempo de espera
+        glutTimerFunc(2000, advance_stage, 0);
+    }
+    else {
+        glBegin(GL_POINTS);
+        emit_brute_lines();
+        glEnd();
+    }
+
+    // Si todavía estamos en la etapa 0,mostrar únicamente Fuerza Bruta
     if (display_stage == 0) {
-        // Rojo para Fuerza Bruta
-        glColor3f(1.0f, 0.0f, 0.0f);
-
-        if (!brute_measured) {
-            double brute_time =
-                benchmark_brute_graphics();
-
-            printf(
-                "Fuerza Bruta con dibujo: %.9f segundos\n",
-                brute_time
-            );
-
-            brute_measured = 1;
-
-            // El temporizador comienza después de que
-            // Fuerza Bruta terminó de ejecutarse
-            glutTimerFunc(2000, advance_stage, 0);
-        }
-        else {
-            // Redibujar sin medir nuevamente
-            glBegin(GL_POINTS);
-            emit_brute_lines();
-            glEnd();
-        }
-
         glFlush();
         return;
     }
 
-    // ETAPA 1: Reconstruir Fuerza Bruta
-    glColor3f(1.0f, 0.0f, 0.0f);
+    // ETAPA 1: Incremental versión 1
+    // Cyan
+    glColor3f(0.0f, 1.0f, 1.0f);
 
-    glBegin(GL_POINTS);
-    emit_brute_lines();
-    glEnd();
+    if (!inc_ver_one_measured) {
+        double inc_ver1_time =
+            benchmark_inc_ver1_graphics();
 
-    // Poner encima el Bresenham NASM
-    // Verde para Bresenham NASM
+        printf(
+            "Incremental Version 1 con dibujo: %.9f segundos\n",
+            inc_ver1_time
+        );
+
+        inc_ver_one_measured = 1;
+
+        // Tiempo de espera
+        glutTimerFunc(2000, advance_stage, 0);
+    }
+    else {
+        glBegin(GL_POINTS);
+        emit_inc_ver1_lines();
+        glEnd();
+    }
+
+    if (display_stage == 1) {
+        glFlush();
+        return;
+    }
+    
+    // ETAPA 2: Incremental versión 2
+    // Amarillo
+    glColor3f(1.0f, 1.0f, 0.0f);
+
+    if (!inc_ver_two_measured) {
+        double inc_ver2_time =
+            benchmark_inc_ver2_graphics();
+
+        printf(
+            "Incremental Version 2 con dibujo: %.9f segundos\n",
+            inc_ver2_time
+        );
+
+        inc_ver_two_measured = 1;
+
+        // Tiempo de espera
+        glutTimerFunc(2000, advance_stage, 0);
+    }
+    else {
+        glBegin(GL_POINTS);
+        emit_inc_ver2_lines();
+        glEnd();
+    }
+
+    if (display_stage == 2) {
+        glFlush();
+        return;
+    }
+
+    // ETAPA 3: Bresenham escrito en C
+    // Magenta
+    glColor3f(1.0f, 0.0f, 1.0f);
+
+    if (!bresenham_c_measured) {
+        /*double bresenham_c_time =
+            benchmark_bresenham_c_graphics();
+
+        printf(
+            "Bresenham C con dibujo: %.9f segundos\n",
+            bresenham_c_time
+        );
+
+        bresenham_c_measured = 1;*/
+
+        // Tiempo de espera
+        glutTimerFunc(2000, advance_stage, 0);
+    }
+    else {
+        glBegin(GL_POINTS);
+        //emit_bresenham_c_lines();
+        glEnd();
+    }
+
+    if (display_stage == 3) {
+        glFlush();
+        return;
+    }
+
+    // ETAPA 4: Bresenham escrito en NASM
+    // Verde
     glColor3f(0.0f, 1.0f, 0.0f);
-
     if (!nasm_measured) {
         double nasm_time =
             benchmark_nasm_graphics();
@@ -643,10 +781,10 @@ void draw_scene(void) {
             "Bresenham NASM con dibujo: %.9f segundos\n",
             nasm_time
         );
+
         nasm_measured = 1;
     }
     else {
-        // Redibujar NASM sin medir nuevamente
         glBegin(GL_POINTS);
         emit_nasm_lines();
         glEnd();
