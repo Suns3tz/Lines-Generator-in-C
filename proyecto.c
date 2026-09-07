@@ -36,6 +36,8 @@ static LINE *lines;
 static int display_stage = 0;
 static int brute_measured = 0;
 static int nasm_measured = 0;
+static int inc_ver_one_measured = 0;
+static int inc_ver_two_measured = 0;
 
 // Prototipos
 void cleanup(void);
@@ -44,6 +46,8 @@ void reshape(int width, int height);
 void plot(int col, int row);
 
 void BrutePure(int x0, int y0, int x1, int y1);
+void IncrVerOnePure(int x0, int y0, int x1, int y1);
+void IncrVerTwoPure(int x0, int y0, int x1, int y1);
 
 int classify_octant(int x0, int y0, int x1, int y1);
 int BresenhamNASM(int x0, int y0, int x1, int y1);
@@ -234,16 +238,21 @@ void BrutePure(int x0, int y0, int x1, int y1) {
     }
 }
 
+int max(int a, int b){
+  if (a>=b) return a;
+  else return b;
+}
+
 void swapPoints(int *x0, int *y0, int *x1, int *y1){
   int tmp_x = *x1;
-  *x1 = 8x0;
+  *x1 = *x0;
   *x0 = tmp_x;
   int tmp_y = *y1;
   *y1 = *y0;
   *y0 = tmp_y;
 }
 
-void IncrVerOnePure (int x0, int y0, int x1, int y1){
+void IncrVerOnePure(int x0, int y0, int x1, int y1){
   if (x0 == x1) {
     if (y1 < y0){
       int tmp = y1;
@@ -251,12 +260,12 @@ void IncrVerOnePure (int x0, int y0, int x1, int y1){
       y0 = tmp;
     }
     for (int y = y0 ; y <= y1; y++){
-      //plot(x0,y);
+      plot(x0,y);
     }
     return;
   }
   if (x1 < x0){
-    swapPoints(&x0, &y0, 7x1, &y1);
+    swapPoints(&x0, &y0, &x1, &y1);
   }
   
   long double m = (long double)(y1-y0)/(x1-x0);
@@ -265,7 +274,7 @@ void IncrVerOnePure (int x0, int y0, int x1, int y1){
     long double y = y0;
     int x = x0;
     for (x = x0; x<= x1 ; x++){
-      //plot(x, round(y));
+      plot(x, round(y));
       y += m;
     }
   }
@@ -276,7 +285,7 @@ void IncrVerOnePure (int x0, int y0, int x1, int y1){
     long double x = x0;
     m = (long double)(x1-x0)/(y1-y0);
     for (int y = y0; y<= y1 ; y++){
-      //plot(round(x), y);
+      plot(round(x), y);
       x += m;
     }
   }
@@ -289,7 +298,7 @@ void IncrVerTwoPure (int x0, int y0, int x1, int y1) {
   paso_x = (x1-x0)/ancho;
   paso_y = (y1-y0)/ancho;
   if (ancho == 0) {
-    //plot(x0,y0);
+    plot(x0,y0);
     return;
   }
   paso_x = (long double)(x1-x0)/ancho;
@@ -297,12 +306,11 @@ void IncrVerTwoPure (int x0, int y0, int x1, int y1) {
   x = x0;
   y = y0;
   for (int i=0; i <= ancho; i++){
-    //plot(round(x),round(y));
+    plot(round(x),round(y));
     x += paso_x;
     y += paso_y;
   }
 }
-
 
 // Ver cual es el octante que se usa
 int classify_octant(int x0, int y0, int x1, int y1) {
@@ -345,7 +353,7 @@ int classify_octant(int x0, int y0, int x1, int y1) {
     return 6;
 }
 
-void 1stOct(int x0, int y0, int x1, int y1){
+void oct_1(int x0, int y0, int x1, int y1){
   int Delta_E = 2*(y1 - y0);
   int Delta_Ne = 2*((y1 - y0) - (x1 - x0));
   
@@ -353,7 +361,7 @@ void 1stOct(int x0, int y0, int x1, int y1){
   int yp = y0;
   //plot(xp,yp);
   
-  d = 2* (y1-y0) - (x1 - x0);
+  int d = 2* (y1-y0) - (x1 - x0);
   while(xp < x1){
     if(d<=0){
       xp++;
@@ -361,13 +369,13 @@ void 1stOct(int x0, int y0, int x1, int y1){
     }else{
       xp++;
       yp++;
-      d = d + Delta_NE;
+      d = d + Delta_Ne;
     }
     //plot(xp,yp);
   } 
 }
 
-void 5thOct(int x0, int y0, int x1, int y1){
+void oct_5(int x0, int y0, int x1, int y1){
   int Delta_O = 2*(y1 - y0);
   int Delta_SO =  2*((y1 - y0) - (x1 - x0));
   
@@ -389,7 +397,7 @@ void 5thOct(int x0, int y0, int x1, int y1){
   } 
 }
 
-void 6thOct(int x0, int y0, int x1, int y1){
+void oct_6(int x0, int y0, int x1, int y1){
   int Delta_S = 2*(x0 - x1);
   int Delta_SO =  2*((x0 - x1) - (y0 - y1));
   
@@ -411,7 +419,7 @@ void 6thOct(int x0, int y0, int x1, int y1){
   } 
 }
 
-void 7thOct(int x0, int y0, int x1, int y1){
+void oct_7(int x0, int y0, int x1, int y1){
   int Delta_S = 2*(x1-x0);
   int Delta_SE = 2*((x1-x0) - (y0 - y1));
   
@@ -431,6 +439,8 @@ void 7thOct(int x0, int y0, int x1, int y1){
     //plot(xp,yp);
   } 
 }
+// Faltan 2, 3, 4, 8 de Bresenham en C
+
 
 // Correr el octante necesario
 int BresenhamNASM(int x0, int y0, int x1, int y1) {
@@ -453,11 +463,21 @@ int BresenhamNASM(int x0, int y0, int x1, int y1) {
             oct4(x0, y0, x1, y1);
             return 1;
 
+        case 5:
+            oct5(x0, y0, x1, y1);
+            return 1;
+        
+        case 6:
+            oct6(x0, y0, x1, y1);
+            return 1;
+        
+        case 7:
+            oct7(x0, y0, x1, y1);
+            return 1;
+
         case 8:
             oct8(x0, y0, x1, y1);
             return 1;
-
-        // Agregar demas octantes aqui
 
         default:
             return 0;
@@ -468,6 +488,32 @@ int BresenhamNASM(int x0, int y0, int x1, int y1) {
 void emit_brute_lines(void) {
     for (int i = 0; i < lines_num; i++) {
         BrutePure(
+            lines[i].x0,
+            lines[i].y0,
+            lines[i].x1,
+            lines[i].y1
+        );
+    }
+}
+
+// Mostrar lineas - Inc Ver 1
+void emit_inc_ver1_lines(void)
+{
+    for (int i = 0; i < lines_num; i++) {
+        IncrVerOnePure(
+            lines[i].x0,
+            lines[i].y0,
+            lines[i].x1,
+            lines[i].y1
+        );
+    }
+}
+
+// Mostrar lineas - Inc Ver 2
+void emit_inc_ver2_lines(void)
+{
+    for (int i = 0; i < lines_num; i++) {
+        IncrVerTwoPure(
             lines[i].x0,
             lines[i].y0,
             lines[i].x1,
@@ -501,9 +547,7 @@ double benchmark_brute_graphics(void) {
 
     glBegin(GL_POINTS);
 
-    for (int repetition = 0;
-         repetition < quantity;
-         repetition++) {
+    for (int repetition = 0; repetition < quantity; repetition++) {
 
         emit_brute_lines();
     }
@@ -551,7 +595,7 @@ void draw_scene(void) {
 
     // ETAPA 0: Mostrar solamente Fuerza Bruta
     if (display_stage == 0) {
-        // Rojo para FUerza Bruta
+        // Rojo para Fuerza Bruta
         glColor3f(1.0f, 0.0f, 0.0f);
 
         if (!brute_measured) {
@@ -610,40 +654,3 @@ void draw_scene(void) {
 
     glFlush();
 }
-
-
-
-/*
-int max(int a, int b){
-  if (a>=b) return a;
-  else return b;
-}
-
-void IncrVerOnePure (int x0, int y0, int x1, int y1){
-  long double m,y;
-  int i;
-  m = (y1-y0)/(x1-x0);
-  y = y0;
-  
-  for(int i=x0; i<= x1; i++){
-    //plot(i, round(y));
-    y = y + m;
-  }
-}
-
-void IncrVerTwoPure (int x0, int y0, int x1, int y1) {
-  long double x,y, paso_x, paso_y;
-  int ancho;
-  ancho = max(abs(x1-x0), abs(y1-y0));
-  paso_x = (x1-x0)/ancho;
-  paso_y = (y1-y0)/ancho;
-  x = x0;
-  y = y0;
-  for (int i=0; i <= ancho; i++)
-  {
-  //plot(round(x), round(y));
-  x+=paso_x;
-  y+=paso_y;
-  }
-}
-*/
