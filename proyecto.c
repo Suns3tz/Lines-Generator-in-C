@@ -12,6 +12,9 @@
 
 // Funciones implementadas en NASM
 extern void oct1(int x0, int y0, int x1, int y1);
+extern void oct2(int x0, int y0, int x1, int y1);
+extern void oct3(int x0, int y0, int x1, int y1);
+extern void oct4(int x0, int y0, int x1, int y1);
 extern void oct8(int x0, int y0, int x1, int y1);
 
 typedef struct {
@@ -276,6 +279,18 @@ int BresenhamNASM(int x0, int y0, int x1, int y1) {
     switch (octant) {
         case 1:
             oct1(x0, y0, x1, y1);
+            return 1;
+
+        case 2:
+            oct2(x0, y0, x1, y1);
+            return 1;
+
+        case 3:
+            oct3(x0, y0, x1, y1);
+            return 1;
+
+        case 4:
+            oct4(x0, y0, x1, y1);
             return 1;
 
         case 8:
