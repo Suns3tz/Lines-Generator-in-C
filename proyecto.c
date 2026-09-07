@@ -279,6 +279,28 @@ void IncrVerOnePure (int x0, int y0, int x1, int y1){
   }
 }
 
+void IncrVerTwoPure (int x0, int y0, int x1, int y1) {
+  long double x,y, paso_x, paso_y;
+  int ancho;
+  ancho = max(abs(x1-x0), abs(y1-y0));
+  paso_x = (x1-x0)/ancho;
+  paso_y = (y1-y0)/ancho;
+  if (ancho == 0) {
+    //plot(x0,y0);
+    return;
+  }
+  paso_x = (long double)(x1-x0)/ancho;
+  paso_y = (long double)(y1-y0)/ancho;
+  x = x0;
+  y = y0;
+  for (int i=0; i <= ancho; i++){
+    //plot(round(x),round(y));
+    x += paso_x;
+    y += paso_y;
+  }
+}
+
+
 // Ver cual es el octante que se usa
 int classify_octant(int x0, int y0, int x1, int y1) {
     int dx = x1 - x0;
