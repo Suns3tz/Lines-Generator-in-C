@@ -4,6 +4,7 @@ section .bss
 
 section .text
     global oct1
+    global oct8
     extern plot
 
 ; vars en C vienen así:
@@ -77,14 +78,14 @@ oct1:
     mov esi, r13d
     call plot
 
-    ; entrar en el while
+; entrar en el while
 _colorLoop:
     cmp r12d, r15d
     ; while xp < x1 siga, else termina
     jge _final
 
     cmp r14d, 0
-    ; if d>0 se colorea NE else se colorea E
+    ; if d > 0 se colorea NE else se colorea E
     jle _colorE
     jmp _colorNE
 
@@ -122,3 +123,115 @@ _final:
     pop rbx
 
     ret
+
+; - - - - - OCTANTE 8
+oct8:
+
+    ; guardar registros que hay que conservar
+    push rbx
+    push rbp
+    push r12
+    push r13
+    push r14
+    push r15
+
+    ; alinear stack antes de llamar funciones C
+    sub rsp, 8
+
+    ; delta_e = 2*(y0-y1)
+    mov eax, esi
+    sub eax, ecx
+
+    shl eax, 1
+    mov ebx, eax
+
+
+    ; delta_se = 2*((y0-y1)-(x1-x0))
+    mov eax, esi
+    sub eax, ecx
+
+    mov r8d, edx
+    sub r8d, edi
+
+    sub eax, r8d
+
+    shl eax, 1
+    mov ebp, eax
+
+
+    ; xp = x0, yp = y0
+
+    mov r12d, edi
+    mov r13d, esi
+
+
+    ; d = 2*(y0-y1) - (x1-x0)
+    mov eax, esi
+    sub eax, ecx
+
+    shl eax, 1
+
+    mov r8d, edx
+    sub r8d, edi
+
+    sub eax, r8d
+
+    mov r14d, eax
+
+    mov r15d, edx
+
+
+    ; plot(xp, yp)
+    mov edi, r12d
+    mov esi, r13d
+    call plot
+
+; while (xp < x1)
+_colorLoop8:
+    cmp r12d, r15d
+    jge _final8
+
+    ; if (d <= 0) ir E
+    cmp r14d, 0
+    jle _colorE8
+
+    ; else ir SE
+    jmp _colorSE8
+
+; pintar E, xp++, d = d + delta_e
+_colorE8:
+    add r12d, 1
+    add r14d, ebx
+
+    jmp _plot8
+
+; pintar SE, xp++, yp--, d = d + delta_se
+_colorSE8:
+    add r12d, 1
+    sub r13d, 1
+
+    add r14d, ebp
+    jmp _plot8
+
+; plot(xp, yp)
+_plot8:
+    mov edi, r12d
+    mov esi, r13d
+
+    call plot
+
+    jmp _colorLoop8
+
+_final8:
+    add rsp, 8
+
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbp
+    pop rbx
+
+    ret
+
+section .note.GNU-stack noalloc noexec nowrite progbits

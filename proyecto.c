@@ -12,6 +12,7 @@
 
 // Funciones implementadas en NASM
 extern void oct1(int x0, int y0, int x1, int y1);
+extern void oct8(int x0, int y0, int x1, int y1);
 
 typedef struct {
     int x0;
@@ -26,18 +27,37 @@ static int lines_num;
 static int quantity;
 static LINE *lines;
 
+static int display_stage = 0;
+static int brute_measured = 0;
+static int nasm_measured = 0;
+
 // Prototipos
-void plot(int col, int row);
-void BrutePure(int x0, int y0, int x1, int y1);
-void draw_scene(void);
-void reshape(int width, int height);
+void cleanup(void);
 void generate_lines(void);
-double elapsed_time(struct timespec start, struct timespec end);
+void reshape(int width, int height);
+void plot(int col, int row);
 
+void BrutePure(int x0, int y0, int x1, int y1);
 
-int main(int argc, char *argv[])
-{
-    // Validación de argumentos dados
+int classify_octant(int x0, int y0, int x1, int y1);
+int BresenhamNASM(int x0, int y0, int x1, int y1);
+
+void emit_brute_lines(void);
+void emit_nasm_lines(void);
+void advance_stage(int value);
+
+double elapsed_time(
+    struct timespec start,
+    struct timespec end
+);
+
+double benchmark_brute_graphics(void);
+double benchmark_nasm_graphics(void);
+
+void draw_scene(void);
+
+int main(int argc, char *argv[]) {
+    // Revisar que los argumentos sean válidos
     if (argc != 4) {
         fprintf(
             stderr,
@@ -52,13 +72,20 @@ int main(int argc, char *argv[])
     lines_num = atoi(argv[2]);
     quantity = atoi(argv[3]);
 
-    if (resolution <= 0 ||
-        lines_num <= 0 ||
-        quantity <= 0) {
-
+    if (resolution <= 0 || lines_num <= 0 || quantity <= 0) {
         fprintf(
             stderr,
             "Todos los argumentos deben ser enteros positivos.\n"
+        );
+
+        return EXIT_FAILURE;
+    }
+
+    // La función que liberará lines cuando el programa termine
+    if (atexit(cleanup) != 0) {
+        fprintf(
+            stderr,
+            "No se pudo registrar la función de limpieza.\n"
         );
 
         return EXIT_FAILURE;
@@ -68,28 +95,17 @@ int main(int argc, char *argv[])
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-
     glutInitWindowSize(resolution, resolution);
     glutCreateWindow("Lineas Rectas");
 
-    glClearColor(
-        0.0f,
-        0.0f,
-        0.0f,
-        1.0f
-    );
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     glPointSize(1.0f);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    gluOrtho2D(
-        0.0,
-        (double)resolution,
-        0.0,
-        (double)resolution
-    );
+    gluOrtho2D(0.0, (double)resolution, 0.0, (double)resolution);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -99,9 +115,13 @@ int main(int argc, char *argv[])
 
     glutMainLoop();
 
-    free(lines);
-
     return EXIT_SUCCESS;
+}
+
+// Limpiar memoria
+void cleanup(void) {
+    free(lines);
+    lines = NULL;
 }
 
 // Generar las líneas
@@ -135,12 +155,7 @@ void reshape(int width, int height) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    gluOrtho2D(
-        0.0,
-        (double)resolution,
-        0.0,
-        (double)resolution
-    );
+    gluOrtho2D(0.0, (double)resolution, 0.0, (double)resolution);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -155,22 +170,31 @@ double elapsed_time(struct timespec start, struct timespec end) {
     return seconds + nanoseconds;
 }
 
+// Esperar cierto tiempo antes de mostrar el siguiente algoritmo
+void advance_stage(int value) {
+    (void)value;
+
+    display_stage = 1;
+    // Solicitar una nueva llamada a draw_scene()
+    glutPostRedisplay();
+}
+
 // Algoritmo de Fuerza Bruta
 void BrutePure(int x0, int y0, int x1, int y1) {
     int dx = x1 - x0;
     int dy = y1 - y0;
 
-    // La línea es de un solo punto
+    // Si solo es un punto
     if (dx == 0 && dy == 0) {
         plot(x0, y0);
         return;
     }
 
-    // Si el cambio horizontal es mayor, se recorre x
+    // Si existe mayor cambio horizontal se recorre x
     if (abs(dx) >= abs(dy)) {
-        // Se decide si se va a incrementar o decrementar el for
+        // Se ve si se va a subir o bajar
         int step_x = (dx > 0) ? 1 : -1;
-        // Se calculan m y b
+        //Se obtienen m y b
         long double m = (long double)dy / (long double)dx;
         long double b = (long double)y0 - m * (long double)x0;
         // Se pintan los puntos
@@ -185,12 +209,12 @@ void BrutePure(int x0, int y0, int x1, int y1) {
         }
     }
 
-    // Si el cambio vertical es mayor, se recorre y
+    // Si existe mayor cambio vertical se recorre y
     else {
-        // Se decide si se va a incrementar o decrementar el for
+        // Se ve si se va a subir o bajar
         int step_y = (dy > 0) ? 1 : -1;
         // Se calcula la inversa de m
-        long double inverse_m = (long double)dx / (long double)dy;
+        long double inverse_m =(long double)dx / (long double)dy;
         // Se pintan los puntos
         for (int y = y0; ; y += step_y) {
             long double x = x0 + inverse_m * (y - y0);
@@ -204,84 +228,220 @@ void BrutePure(int x0, int y0, int x1, int y1) {
     }
 }
 
-// Dibujar los algoritmos
-void draw_scene(void) {
-    static int first_execution = 1;
-    glClear(GL_COLOR_BUFFER_BIT);
+// Ver cual es el octante que se usa
+int classify_octant(int x0, int y0, int x1, int y1) {
+    int dx = x1 - x0;
+    int dy = y1 - y0;
 
-    // Fuerza Bruta: color rojo
-    glColor3f(1.0f, 0.0f, 0.0f);
+    // Si solo es un punto se asigna al octante 1
+    if (dx == 0 && dy == 0) {
+        return 1;
+    }
 
-    if (first_execution) {
-        struct timespec start;
-        struct timespec end;
-
-        clock_gettime(CLOCK_MONOTONIC, &start);
-
-        glBegin(GL_POINTS);
-
-        for (int repetition = 0; repetition < quantity; repetition++) {
-
-            for (int i = 0; i < lines_num; i++) {
-                BrutePure(
-                    lines[i].x0,
-                    lines[i].y0,
-                    lines[i].x1,
-                    lines[i].y1
-                );
+    // En la mitad derecha x aumenta
+    if (dx >= 0) {
+        if (dy >= 0) {
+            if (dx >= dy) {
+                return 1;
             }
+
+            return 2;
+        }
+        if (dx >= -dy) {
+            return 8;
         }
 
-        glEnd();
+        return 7;
+    }
 
-        // Espera a que OpenGL termine de procesar las
-        // operaciones antes de detener el reloj.
-        glFinish();
-
-        clock_gettime(CLOCK_MONOTONIC, &end);
-
-        printf(
-            "Fuerza Bruta con dibujo: %.9f segundos\n",
-            elapsed_time(start, end)
-        );
-
-        first_execution = 0;
-    } else {
-        // Si GLUT solicita volver a mostrar la ventana,
-         // se dibujan las líneas una sola vez
-        glBegin(GL_POINTS);
-
-        for (int i = 0; i < lines_num; i++) {
-            BrutePure(
-                lines[i].x0,
-                lines[i].y0,
-                lines[i].x1,
-                lines[i].y1
-            );
+    // En la mitad izquierda x disminuye
+    if (dy >= 0) {
+        if (dy >= -dx) {
+            return 3;
         }
 
-        glEnd();
-        glFlush();
+        return 4;
+    }
+    if (-dx >= -dy) {
+        return 5;
+    }
+
+    return 6;
+}
+
+// Correr el octante necesario
+int BresenhamNASM(int x0, int y0, int x1, int y1) {
+    int octant = classify_octant(x0, y0, x1, y1);
+
+    switch (octant) {
+        case 1:
+            oct1(x0, y0, x1, y1);
+            return 1;
+
+        case 8:
+            oct8(x0, y0, x1, y1);
+            return 1;
+
+        // Agregar demas octantes aqui
+
+        default:
+            return 0;
     }
 }
+
+// Mostrar lineas - Fuerza bruta
+void emit_brute_lines(void) {
+    for (int i = 0; i < lines_num; i++) {
+        BrutePure(
+            lines[i].x0,
+            lines[i].y0,
+            lines[i].x1,
+            lines[i].y1
+        );
+    }
+}
+
+// Mostrar lineas - Bresenham NASM
+void emit_nasm_lines(void)
+{
+    for (int i = 0; i < lines_num; i++) {
+        BresenhamNASM(
+            lines[i].x0,
+            lines[i].y0,
+            lines[i].x1,
+            lines[i].y1
+        );
+    }
+}
+
+// Medir tiempo - Fuerza Bruta
+double benchmark_brute_graphics(void) {
+    struct timespec start;
+    struct timespec end;
+
+    // Espera cualquier trabajo anterior antes de comenzar a medir
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    glBegin(GL_POINTS);
+
+    for (int repetition = 0;
+         repetition < quantity;
+         repetition++) {
+
+        emit_brute_lines();
+    }
+
+    glEnd();
+    // Garantiza que OpenGL terminó de procesar todos los puntos
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    return elapsed_time(start, end);
+}
+
+// Medir tiempo - Bresenham NASM
+double benchmark_nasm_graphics(void) {
+    struct timespec start;
+    struct timespec end;
+
+    // Espera cualquier trabajo anterior antes de comenzar a medir
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    glBegin(GL_POINTS);
+
+    for (int repetition = 0;
+         repetition < quantity;
+         repetition++) {
+
+        emit_nasm_lines();
+    }
+
+    glEnd();
+    // Garantiza que OpenGL terminó de procesar todos los puntos
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    return elapsed_time(start, end);
+}
+
+// Pintar los algoritmos
+void draw_scene(void) {
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // ETAPA 0: Mostrar solamente Fuerza Bruta
+    if (display_stage == 0) {
+        // Rojo para FUerza Bruta
+        glColor3f(1.0f, 0.0f, 0.0f);
+
+        if (!brute_measured) {
+            double brute_time =
+                benchmark_brute_graphics();
+
+            printf(
+                "Fuerza Bruta con dibujo: %.9f segundos\n",
+                brute_time
+            );
+
+            brute_measured = 1;
+
+            // El temporizador comienza después de que
+            // Fuerza Bruta terminó de ejecutarse
+            glutTimerFunc(2000, advance_stage, 0);
+        }
+        else {
+            // Redibujar sin medir nuevamente
+            glBegin(GL_POINTS);
+            emit_brute_lines();
+            glEnd();
+        }
+
+        glFlush();
+        return;
+    }
+
+    // ETAPA 1: Reconstruir Fuerza Bruta
+    glColor3f(1.0f, 0.0f, 0.0f);
+
+    glBegin(GL_POINTS);
+    emit_brute_lines();
+    glEnd();
+
+    // Poner encima el Bresenham NASM
+    // Verde para Bresenham NASM
+    glColor3f(0.0f, 1.0f, 0.0f);
+
+    if (!nasm_measured) {
+        double nasm_time =
+            benchmark_nasm_graphics();
+
+        printf(
+            "Bresenham NASM con dibujo: %.9f segundos\n",
+            nasm_time
+        );
+        nasm_measured = 1;
+    }
+    else {
+        // Redibujar NASM sin medir nuevamente
+        glBegin(GL_POINTS);
+        emit_nasm_lines();
+        glEnd();
+    }
+
+    glFlush();
+}
+
+
 
 /*
 int max(int a, int b){
   if (a>=b) return a;
   else return b;
-}
-
-// Algoritmo de Fuerza Bruta
-void BrutePure (int x0, int y0, int x1, int y1) {
-  long double m, b, y;
-  int i;
-  m = (long double)(y1 - y0) / (long double)(x1 - x0);
-  b = y0 - m*x0;
-  
-  for(int i = x0; i <= x1; i++){
-    y = m*i + b;
-    plot(i, round(y));
-  }
 }
 
 void IncrVerOnePure (int x0, int y0, int x1, int y1){
@@ -310,39 +470,5 @@ void IncrVerTwoPure (int x0, int y0, int x1, int y1) {
   x+=paso_x;
   y+=paso_y;
   }
-}
-
-void bresenham_nasm(int x0, int y0, int x1, int y1){
-    int dx = x1 - x0;
-    int dy = y1 - y0;
-
-    if (dx >= 0 && dy >= 0) {
-
-        if (dx >= dy)
-            oct1(x0, y0, x1, y1);
-        else
-            oct2(x0, y0, x1, y1);
-
-    } else if (dx < 0 && dy >= 0) {
-
-        if (-dx <= dy)
-            oct3(x0, y0, x1, y1);
-        else
-            oct4(x0, y0, x1, y1);
-
-    } else if (dx < 0 && dy < 0) {
-
-        if (-dx >= -dy)
-            oct5(x0, y0, x1, y1);
-        else
-            oct6(x0, y0, x1, y1);
-
-    } else {
-
-        if (dx <= -dy)
-            oct7(x0, y0, x1, y1);
-        else
-            oct8(x0, y0, x1, y1);
-    }
 }
 */
