@@ -15,6 +15,9 @@ extern void oct1(int x0, int y0, int x1, int y1);
 extern void oct2(int x0, int y0, int x1, int y1);
 extern void oct3(int x0, int y0, int x1, int y1);
 extern void oct4(int x0, int y0, int x1, int y1);
+extern void oct5(int x0, int y0, int x1, int y1);
+extern void oct6(int x0, int y0, int x1, int y1);
+extern void oct7(int x0, int y0, int x1, int y1);
 extern void oct8(int x0, int y0, int x1, int y1);
 
 typedef struct {
@@ -231,6 +234,76 @@ void BrutePure(int x0, int y0, int x1, int y1) {
     }
 }
 
+void swapPoints(int *x0, int *y0, int *x1, int *y1){
+  int tmp_x = *x1;
+  *x1 = 8x0;
+  *x0 = tmp_x;
+  int tmp_y = *y1;
+  *y1 = *y0;
+  *y0 = tmp_y;
+}
+
+void IncrVerOnePure (int x0, int y0, int x1, int y1){
+  if (x0 == x1) {
+    if (y1 < y0){
+      int tmp = y1;
+      y1 = y0;
+      y0 = tmp;
+    }
+    for (int y = y0 ; y <= y1; y++){
+      //plot(x0,y);
+    }
+    return;
+  }
+  if (x1 < x0){
+    swapPoints(&x0, &y0, 7x1, &y1);
+  }
+  
+  long double m = (long double)(y1-y0)/(x1-x0);
+  
+  if (fabsl(m) <= 1,0) {
+    long double y = y0;
+    int x = x0;
+    for (x = x0; x<= x1 ; x++){
+      //plot(x, round(y));
+      y += m;
+    }
+  }
+  else{
+    if(y0 > y1) {
+      swapPoints(&x0, &y0, &x1, &y1);
+    }
+    long double x = x0;
+    m = (long double)(x1-x0)/(y1-y0);
+    for (int y = y0; y<= y1 ; y++){
+      //plot(round(x), y);
+      x += m;
+    }
+  }
+}
+
+void IncrVerTwoPure (int x0, int y0, int x1, int y1) {
+  long double x,y, paso_x, paso_y;
+  int ancho;
+  ancho = max(abs(x1-x0), abs(y1-y0));
+  paso_x = (x1-x0)/ancho;
+  paso_y = (y1-y0)/ancho;
+  if (ancho == 0) {
+    //plot(x0,y0);
+    return;
+  }
+  paso_x = (long double)(x1-x0)/ancho;
+  paso_y = (long double)(y1-y0)/ancho;
+  x = x0;
+  y = y0;
+  for (int i=0; i <= ancho; i++){
+    //plot(round(x),round(y));
+    x += paso_x;
+    y += paso_y;
+  }
+}
+
+
 // Ver cual es el octante que se usa
 int classify_octant(int x0, int y0, int x1, int y1) {
     int dx = x1 - x0;
@@ -270,6 +343,93 @@ int classify_octant(int x0, int y0, int x1, int y1) {
     }
 
     return 6;
+}
+
+void 1stOct(int x0, int y0, int x1, int y1){
+  int Delta_E = 2*(y1 - y0);
+  int Delta_Ne = 2*((y1 - y0) - (x1 - x0));
+  
+  int xp = x0;
+  int yp = y0;
+  //plot(xp,yp);
+  
+  d = 2* (y1-y0) - (x1 - x0);
+  while(xp < x1){
+    if(d<=0){
+      xp++;
+      d = d + Delta_E;
+    }else{
+      xp++;
+      yp++;
+      d = d + Delta_NE;
+    }
+    //plot(xp,yp);
+  } 
+}
+
+void 5thOct(int x0, int y0, int x1, int y1){
+  int Delta_O = 2*(y1 - y0);
+  int Delta_SO =  2*((y1 - y0) - (x1 - x0));
+  
+  int xp = x0;
+  int yp = y0;
+  //plot(xp,yp);
+  
+  int d = 2 * (y1-y0) - (x1 - x0);
+  while(xp > x1){
+    if(d>=0){
+      xp--;
+      d = d + Delta_O;
+    }else{
+      xp--;
+      yp--;
+      d = d + Delta_SO;
+    }
+    //plot(xp,yp);
+  } 
+}
+
+void 6thOct(int x0, int y0, int x1, int y1){
+  int Delta_S = 2*(x0 - x1);
+  int Delta_SO =  2*((x0 - x1) - (y0 - y1));
+  
+  int xp = x0;
+  int yp = y0;
+  //plot(xp,yp);
+  
+  int d = 2 * (x0 - x1) - (y0-y1);
+  while(yp > y1){
+    if(d>=0){
+      yp--;
+      xp--;
+      d = d + Delta_SO;
+    }else{
+      yp--;
+      d = d + Delta_S;
+    }
+    //plot(xp,yp);
+  } 
+}
+
+void 7thOct(int x0, int y0, int x1, int y1){
+  int Delta_S = 2*(x1-x0);
+  int Delta_SE = 2*((x1-x0) - (y0 - y1));
+  
+  int xp = x0;
+  int yp = y0;
+  //plot(xp,yp);
+  int d = 2 * (x1 - x0) - (y0-y1);
+  while(yp > y1){
+    if(d>=0){
+      yp--;
+      xp++;
+      d = d + Delta_SE;
+    }else{
+      yp--;
+      d = d + Delta_S;
+    }
+    //plot(xp,yp);
+  } 
 }
 
 // Correr el octante necesario
