@@ -714,7 +714,7 @@ _colorS7:
     jmp _plot7
 
 _colorSE7:
-    ; pintar SO, xp++, yp--, d = d+delta_SO
+    ; pintar SO, xp++, yp--, d = d+delta_SE
     add r12d, 1
     sub r13d, 1
     add r14d, ebp
@@ -743,7 +743,6 @@ _final7:
 
 ; - - - - - OCTANTE 8
 oct8:
-
     ; guardar registros que hay que conservar
     push rbx
     push rbp

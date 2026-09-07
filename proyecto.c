@@ -196,6 +196,7 @@ void advance_stage(int value) {
     }
 }
 
+// - - - - - - - - -  - ALGORITMOS - - - - - - - - - - -
 // Algoritmo de Fuerza Bruta
 void BrutePure(int x0, int y0, int x1, int y1) {
     int dx = x1 - x0;
@@ -245,6 +246,7 @@ void BrutePure(int x0, int y0, int x1, int y1) {
     }
 }
 
+// Algoritmos Incrementales
 int max(int a, int b){
   if (a>=b) return a;
   else return b;
@@ -319,6 +321,8 @@ void IncrVerTwoPure(int x0, int y0, int x1, int y1) {
   }
 }
 
+// Algoritmos de Bresenham
+
 // Ver cual es el octante que se usa
 int classify_octant(int x0, int y0, int x1, int y1) {
     int dx = x1 - x0;
@@ -360,13 +364,14 @@ int classify_octant(int x0, int y0, int x1, int y1) {
     return 6;
 }
 
+// Bresenham en C
 void oct_1(int x0, int y0, int x1, int y1){
   int Delta_E = 2*(y1 - y0);
   int Delta_Ne = 2*((y1 - y0) - (x1 - x0));
   
   int xp = x0;
   int yp = y0;
-  //plot(xp,yp);
+  plot(xp,yp);
   
   int d = 2* (y1-y0) - (x1 - x0);
   while(xp < x1){
@@ -378,8 +383,74 @@ void oct_1(int x0, int y0, int x1, int y1){
       yp++;
       d = d + Delta_Ne;
     }
-    //plot(xp,yp);
+    plot(xp,yp);
   } 
+}
+
+void oct_2(int x0, int y0, int x1, int y1){
+  int Delta_N = 2*(x0 - x1);
+  int Delta_Ne = 2*((y1 - y0) - (x1 - x0));
+
+  int xp = x0;
+  int yp = y0;
+  plot(xp,yp);
+
+  int d = (y1-y0) - 2*(x1 - x0);
+  while(yp < y1){
+    if(d<=0){
+      xp++;
+      yp++;
+      d = d + Delta_Ne;
+    }else{
+      yp++;
+      d = d + Delta_N;
+    }
+    plot(xp,yp);
+  }
+}
+
+void oct_3(int x0, int y0, int x1, int y1){
+  int Delta_N = 2*(x0 - x1);
+  int Delta_NO = 2*((y0 - y1) + (x0 - x1));
+
+  int xp = x0;
+  int yp = y0;
+  plot(xp,yp);
+
+  int d = (y0-y1) - 2*(x1 - x0);
+  while(yp < y1){
+    if(d<=0){
+      yp++;
+      d = d + Delta_N;
+    }else{
+      xp--;
+      yp++;
+      d = d + Delta_NO;
+    }
+    plot(xp,yp);
+  }
+}
+
+void oct_4(int x0, int y0, int x1, int y1){
+  int Delta_O = 2*(y0 - y1);
+  int Delta_NO = 2*((y0 - y1) + (x0 - x1));
+
+  int xp = x0;
+  int yp = y0;
+  plot(xp,yp);
+
+  int d = 2*(y0-y1) - (x1 - x0);
+  while(xp > x1){
+    if(d<=0){
+      xp--;
+      yp++;
+      d = d + Delta_NO;
+    }else{
+      xp--;
+      d = d + Delta_O;
+    }
+    plot(xp,yp);
+  }
 }
 
 void oct_5(int x0, int y0, int x1, int y1){
@@ -388,7 +459,7 @@ void oct_5(int x0, int y0, int x1, int y1){
   
   int xp = x0;
   int yp = y0;
-  //plot(xp,yp);
+  plot(xp,yp);
   
   int d = 2 * (y1-y0) - (x1 - x0);
   while(xp > x1){
@@ -400,7 +471,7 @@ void oct_5(int x0, int y0, int x1, int y1){
       yp--;
       d = d + Delta_SO;
     }
-    //plot(xp,yp);
+    plot(xp,yp);
   } 
 }
 
@@ -410,7 +481,7 @@ void oct_6(int x0, int y0, int x1, int y1){
   
   int xp = x0;
   int yp = y0;
-  //plot(xp,yp);
+  plot(xp,yp);
   
   int d = 2 * (x0 - x1) - (y0-y1);
   while(yp > y1){
@@ -422,7 +493,7 @@ void oct_6(int x0, int y0, int x1, int y1){
       yp--;
       d = d + Delta_S;
     }
-    //plot(xp,yp);
+    plot(xp,yp);
   } 
 }
 
@@ -432,7 +503,9 @@ void oct_7(int x0, int y0, int x1, int y1){
   
   int xp = x0;
   int yp = y0;
-  //plot(xp,yp);
+  
+  plot(xp,yp);
+
   int d = 2 * (x1 - x0) - (y0-y1);
   while(yp > y1){
     if(d>=0){
@@ -443,13 +516,35 @@ void oct_7(int x0, int y0, int x1, int y1){
       yp--;
       d = d + Delta_S;
     }
-    //plot(xp,yp);
+    plot(xp,yp);
   } 
 }
-// Faltan 2, 3, 4, 8 de Bresenham en C
 
+void oct_8(int x0, int y0, int x1, int y1){
+  int Delta_E = 2*(y0 - y1);
+  int Delta_SE = 2*((y0-y1) - (x1 - x0));
+  
+  int xp = x0;
+  int yp = y0;
 
-// Correr el octante necesario
+  plot(xp,yp);
+
+  int d = 2 * (y0-y1) - (x1 - x0);
+
+  while(xp < x1){
+    if(d <= 0){
+      xp++;
+      d = d + Delta_E;
+    }else{
+      xp++;
+      yp--;
+      d = d + Delta_SE;
+    }
+    plot(xp,yp);
+  } 
+}
+
+// Correr el octante necesario en NASM
 int BresenhamNASM(int x0, int y0, int x1, int y1) {
     int octant = classify_octant(x0, y0, x1, y1);
 
@@ -491,6 +586,47 @@ int BresenhamNASM(int x0, int y0, int x1, int y1) {
     }
 }
 
+int BresenhamC(int x0, int y0, int x1, int y1) {
+    int octant = classify_octant(x0, y0, x1, y1);
+
+    switch (octant) {
+        case 1:
+            oct_1(x0, y0, x1, y1);
+            return 1;
+
+        case 2:
+            oct_2(x0, y0, x1, y1);
+            return 1;
+
+        case 3:
+            oct_3(x0, y0, x1, y1);
+            return 1;
+
+        case 4:
+            oct_4(x0, y0, x1, y1);
+            return 1;
+
+        case 5:
+            oct_5(x0, y0, x1, y1);
+            return 1;
+        
+        case 6:
+            oct_6(x0, y0, x1, y1);
+            return 1;
+        
+        case 7:
+            oct_7(x0, y0, x1, y1);
+            return 1;
+
+        case 8:
+            oct_8(x0, y0, x1, y1);
+            return 1;
+
+        default:
+            return 0;
+    }
+}
+
 // Mostrar lineas - Fuerza bruta
 void emit_brute_lines(void) {
     for (int i = 0; i < lines_num; i++) {
@@ -519,6 +655,18 @@ void emit_inc_ver1_lines(void) {
 void emit_inc_ver2_lines(void) {
     for (int i = 0; i < lines_num; i++) {
         IncrVerTwoPure(
+            lines[i].x0,
+            lines[i].y0,
+            lines[i].x1,
+            lines[i].y1
+        );
+    }
+}
+
+// Mostrar lineas - Bresenham NASM
+void emit_bresenham_lines(void) {
+    for (int i = 0; i < lines_num; i++) {
+        BresenhamC(
             lines[i].x0,
             lines[i].y0,
             lines[i].x1,
@@ -606,6 +754,34 @@ double benchmark_inc_ver2_graphics(void) {
     for (int repetition = 0; repetition < quantity; repetition++) {
 
         emit_inc_ver2_lines();
+    }
+
+    glEnd();
+    // Garantiza que OpenGL terminó de procesar todos los puntos
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    return elapsed_time(start, end);
+}
+
+// Medir tiempo - Bresenham NASM
+double benchmark_bresenham_graphics(void) {
+    struct timespec start;
+    struct timespec end;
+
+    // Espera cualquier trabajo anterior antes de comenzar a medir
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    glBegin(GL_POINTS);
+
+    for (int repetition = 0;
+         repetition < quantity;
+         repetition++) {
+
+        emit_bresenham_lines();
     }
 
     glEnd();
@@ -746,22 +922,22 @@ void draw_scene(void) {
     glColor3f(1.0f, 0.0f, 1.0f);
 
     if (!bresenham_c_measured) {
-        /*double bresenham_c_time =
-            benchmark_bresenham_c_graphics();
+        double bresenham_c_time =
+            benchmark_bresenham_graphics();
 
         printf(
             "Bresenham C con dibujo: %.9f segundos\n",
             bresenham_c_time
         );
 
-        bresenham_c_measured = 1;*/
+        bresenham_c_measured = 1;
 
         // Tiempo de espera
         glutTimerFunc(2000, advance_stage, 0);
     }
     else {
         glBegin(GL_POINTS);
-        //emit_bresenham_c_lines();
+        emit_bresenham_lines();
         glEnd();
     }
 
