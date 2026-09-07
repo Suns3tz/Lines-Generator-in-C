@@ -156,8 +156,7 @@ double elapsed_time(struct timespec start, struct timespec end) {
 }
 
 // Algoritmo de Fuerza Bruta
-void BrutePure(int x0, int y0, int x1, int y1)
-{
+void BrutePure(int x0, int y0, int x1, int y1) {
     int dx = x1 - x0;
     int dy = y1 - y0;
 
@@ -169,12 +168,12 @@ void BrutePure(int x0, int y0, int x1, int y1)
 
     // Si el cambio horizontal es mayor, se recorre x
     if (abs(dx) >= abs(dy)) {
+        // Se decide si se va a incrementar o decrementar el for
         int step_x = (dx > 0) ? 1 : -1;
-
+        // Se calculan m y b
         long double m = (long double)dy / (long double)dx;
-
         long double b = (long double)y0 - m * (long double)x0;
-
+        // Se pintan los puntos
         for (int x = x0; ; x += step_x) {
             long double y = m * x + b;
 
@@ -188,10 +187,11 @@ void BrutePure(int x0, int y0, int x1, int y1)
 
     // Si el cambio vertical es mayor, se recorre y
     else {
+        // Se decide si se va a incrementar o decrementar el for
         int step_y = (dy > 0) ? 1 : -1;
-
+        // Se calcula la inversa de m
         long double inverse_m = (long double)dx / (long double)dy;
-
+        // Se pintan los puntos
         for (int y = y0; ; y += step_y) {
             long double x = x0 + inverse_m * (y - y0);
 
