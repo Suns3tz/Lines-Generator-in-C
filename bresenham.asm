@@ -124,6 +124,319 @@ _final:
 
     ret
 
+; - - - - - OCTANTE 5
+
+oct5:
+
+    ; guardar registros que hay que conservar
+    push rbx
+    push rbp
+    push r12
+    push r13
+    push r14
+    push r15
+
+    ; alinear stack antes de llamar funciones C
+    sub rsp, 8
+
+    ; delta_S = 2*(y1-y0)
+    mov eax, ecx
+    sub eax, esi
+
+    shl eax, 1
+    mov ebx, eax
+
+    ; delta_SO = 2*((y1-y0)-(x1-x0))
+    mov eax, ecx
+    sub eax, esi
+
+    mov r8d, edx
+    sub r8d, edi
+
+    sub eax, r8d
+
+    shl eax, 1
+    mov ebp, eax
+
+    ;xp = x0, yp = y0
+    mov r12d, edi
+    mov r13d, esi
+
+    ; d = 2*(y1-y0) - (x1-x0)
+    mov eax, ecx
+    sub eax, esi
+
+    shl eax, 1
+
+    mov esi, edx
+    sub esi, edi
+
+    sub eax, esi
+    mov r14d, eax
+
+    ; Guardar x1
+    mov r15d, edx
+
+    ; plot(xp, yp)
+    mov edi, r12d
+    mov esi, r13d
+    call plot
+
+    ; entrar en el while
+_colorLoop:
+    cmp r12d, r15d
+    ; while xp > x1 siga, else termina
+    jge _final
+
+    cmp r14d, 0
+    ; if d>=0 se colorea SO else se colorea O
+    jle _colorO
+    jmp _colorSO
+
+_colorO:
+    ; pintar O, xp--, d = d+delta_O
+    sub r12d, 1
+    add r14d, ebx
+
+    jmp _plot
+
+_colorSO:
+    ; pintar SO, xp--, yp--, d = d+delta_SO
+    sub r12d, 1
+    sub r13d, 1
+    add r14d, ebp
+
+    jmp _plot
+
+_plot:
+    mov edi, r12d
+    mov esi, r13d
+
+    call plot
+
+    jmp _colorLoop
+
+_final:
+    add rsp, 8
+
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbp
+    pop rbx
+
+    ret
+    
+; - - - - - OCTANTE 6
+
+oct6:
+
+    ; guardar registros que hay que conservar
+    push rbx
+    push rbp
+    push r12
+    push r13
+    push r14
+    push r15
+
+    ; alinear stack antes de llamar funciones C
+    sub rsp, 8
+
+    ; delta_S = 2*(x0-x1)
+    mov eax, edi
+    sub eax, edx
+
+    shl eax, 1
+    mov ebx, eax
+
+    ; delta_SO = 2*((x0-x1)-(y0-y1))
+    mov eax, edi
+    sub eax, edx
+
+    mov r8d, esi
+    sub r8d, ecx
+
+    sub eax, r8d
+
+    shl eax, 1
+    mov ebp, eax
+
+    ;xp = x0, yp = y0
+    mov r12d, edi
+    mov r13d, esi
+
+    ; d = 2*(x0-x1) - (y0-y1)
+    mov eax, edi
+    sub eax, edx
+
+    shl eax, 1
+
+    sub eax, r8d
+    mov r14d, eax
+
+    ; Guardar y1
+    mov r15d, ecx
+
+    ; plot(xp, yp)
+    mov edi, r12d
+    mov esi, r13d
+    call plot
+
+    ; entrar en el while
+_colorLoop:
+    cmp r13d, r15d
+    ; while yp > y1 siga, else termina
+    jle _final
+
+    cmp r14d, 0
+    ; if d>=0 se colorea SO else se colorea S
+    jge _colorSO
+    jmp _colorS
+
+_colorS:
+    ; pintar S, yp--, d = d+delta_S
+    sub r13d, 1
+    add r14d, ebx
+
+    jmp _plot
+
+_colorSO:
+    ; pintar SO, xp--, yp--, d = d+delta_SO
+    sub r12d, 1
+    sub r13d, 1
+    add r14d, ebp
+
+    jmp _plot
+
+_plot:
+    mov edi, r12d
+    mov esi, r13d
+
+    call plot
+
+    jmp _colorLoop
+
+_final:
+    add rsp, 8
+
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbp
+    pop rbx
+
+    ret
+
+
+
+; - - - - - OCTANTE 7
+
+oct7:
+
+    ; guardar registros que hay que conservar
+    push rbx
+    push rbp
+    push r12
+    push r13
+    push r14
+    push r15
+
+    ; alinear stack antes de llamar funciones C
+    sub rsp, 8
+
+    ; delta_S = 2*(x1-x0)
+    mov eax, edx
+    sub eax, edi
+
+    shl eax, 1
+    mov ebx, eax
+
+    ; delta_SE = 2*((x1-x0)-(y0-y1))
+    mov eax, edx
+    sub eax, edi
+
+    mov r8d, esi
+    sub r8d, ecx
+
+    sub eax, r8d
+
+    shl eax, 1
+    mov ebp, eax
+
+    ;xp = x0, yp = y0
+    mov r12d, edi
+    mov r13d, esi
+
+    ; d = 2*(x1-x0) - (y0-y1)
+    mov eax, edx
+    sub eax, edi
+
+    shl eax, 1
+    
+    mov r8d, esi
+    sub r8d, ecx
+
+    sub eax, r8d
+    mov r14d, eax
+
+    ; Guardar y1
+    mov r15d, ecx
+
+    ; plot(xp, yp)
+    mov edi, r12d
+    mov esi, r13d
+    call plot
+
+    ; entrar en el while
+_colorLoop:
+    cmp r13d, r15d
+    ; while yp > y1 siga, else termina
+    jle _final
+
+    cmp r14d, 0
+    ; if d>=0 se colorea SE else se colorea S
+    jge _colorSE
+    jmp _colorS
+
+_colorS:
+    ; pintar S, yp--, d = d+delta_S
+    sub r13d, 1
+    add r14d, ebx
+
+    jmp _plot
+
+_colorSE:
+    ; pintar SO, xp++, yp--, d = d+delta_SO
+    add r12d, 1
+    sub r13d, 1
+    add r14d, ebp
+
+    jmp _plot
+
+_plot:
+    mov edi, r12d
+    mov esi, r13d
+
+    call plot
+
+    jmp _colorLoop
+
+_final:
+    add rsp, 8
+
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbp
+    pop rbx
+
+    ret
+
+
+
 ; - - - - - OCTANTE 8
 oct8:
 
