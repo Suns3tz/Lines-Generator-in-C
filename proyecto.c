@@ -375,6 +375,72 @@ void oct_1(int x0, int y0, int x1, int y1){
   } 
 }
 
+void oct_2(int x0, int y0, int x1, int y1){
+  int Delta_N = 2*(x0 - x1);
+  int Delta_Ne = 2*((y1 - y0) - (x1 - x0));
+
+  int xp = x0;
+  int yp = y0;
+  //plot(xp,yp);
+
+  int d = (y1-y0) - 2*(x1 - x0);
+  while(yp < y1){
+    if(d<=0){
+      xp++;
+      yp++;
+      d = d + Delta_Ne;
+    }else{
+      yp++;
+      d = d + Delta_N;
+    }
+    //plot(xp,yp);
+  }
+}
+
+void oct_3(int x0, int y0, int x1, int y1){
+  int Delta_N = 2*(x0 - x1);
+  int Delta_NO = 2*((y0 - y1) + (x0 - x1));
+
+  int xp = x0;
+  int yp = y0;
+  //plot(xp,yp);
+
+  int d = (y0-y1) - 2*(x1 - x0);
+  while(yp < y1){
+    if(d<=0){
+      yp++;
+      d = d + Delta_N;
+    }else{
+      xp--;
+      yp++;
+      d = d + Delta_NO;
+    }
+    //plot(xp,yp);
+  }
+}
+
+void oct_4(int x0, int y0, int x1, int y1){
+  int Delta_O = 2*(y0 - y1);
+  int Delta_NO = 2*((y0 - y1) + (x0 - x1));
+
+  int xp = x0;
+  int yp = y0;
+  //plot(xp,yp);
+
+  int d = 2*(y0-y1) - (x1 - x0);
+  while(xp > x1){
+    if(d<=0){
+      xp--;
+      yp++;
+      d = d + Delta_NO;
+    }else{
+      xp--;
+      d = d + Delta_O;
+    }
+    //plot(xp,yp);
+  }
+}
+
 void oct_5(int x0, int y0, int x1, int y1){
   int Delta_O = 2*(y1 - y0);
   int Delta_SO =  2*((y1 - y0) - (x1 - x0));
@@ -439,7 +505,7 @@ void oct_7(int x0, int y0, int x1, int y1){
     //plot(xp,yp);
   } 
 }
-// Faltan 2, 3, 4, 8 de Bresenham en C
+// Falta 8 de Bresenham en C
 
 
 // Correr el octante necesario
