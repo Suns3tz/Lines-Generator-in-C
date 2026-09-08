@@ -1,10 +1,17 @@
 #include <GL/gl.h>
 
-// Dibujar pixeles
-void plot(int col, int row) {
-    glVertex2f(col + 0.5f, row + 0.5f);
+#include "plots.h"
+
+void plot(int col, int row)
+{
+    glVertex2f(
+        (float)col + 0.5f,
+        (float)row + 0.5f
+    );
 }
 
-void plotPure(int col, int row) {
-    return;
+void plotPure(int col, int row)
+{
+    (void)col;
+    (void)row;
 }
