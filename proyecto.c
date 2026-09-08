@@ -20,6 +20,15 @@ extern void oct6(int x0, int y0, int x1, int y1);
 extern void oct7(int x0, int y0, int x1, int y1);
 extern void oct8(int x0, int y0, int x1, int y1);
 
+extern void oct1_pure(int x0, int y0, int x1, int y1);
+extern void oct2_pure(int x0, int y0, int x1, int y1);
+extern void oct3_pure(int x0, int y0, int x1, int y1);
+extern void oct4_pure(int x0, int y0, int x1, int y1);
+extern void oct5_pure(int x0, int y0, int x1, int y1);
+extern void oct6_pure(int x0, int y0, int x1, int y1);
+extern void oct7_pure(int x0, int y0, int x1, int y1);
+extern void oct8_pure(int x0, int y0, int x1, int y1);
+
 typedef struct {
     int x0;
     int y0;
@@ -45,9 +54,13 @@ void cleanup(void);
 void generate_lines(void);
 void reshape(int width, int height);
 void plot(int col, int row);
+void plotPure(int col, int row);
 
+void Brute(int x0, int y0, int x1, int y1);
 void BrutePure(int x0, int y0, int x1, int y1);
+void IncrVerOne(int x0, int y0, int x1, int y1);
 void IncrVerOnePure(int x0, int y0, int x1, int y1);
+void IncrVerTwo(int x0, int y0, int x1, int y1);
 void IncrVerTwoPure(int x0, int y0, int x1, int y1);
 
 int classify_octant(int x0, int y0, int x1, int y1);
@@ -163,6 +176,10 @@ void plot(int col, int row) {
     glVertex2f(col + 0.5f, row + 0.5f);
 }
 
+void plotPure(int col, int row) {
+    return;
+}
+
 // Redimensionar
 void reshape(int width, int height) {
     glViewport(0, 0, width, height);
@@ -198,7 +215,7 @@ void advance_stage(int value) {
 
 // - - - - - - - - -  - ALGORITMOS - - - - - - - - - - -
 // Algoritmo de Fuerza Bruta
-void BrutePure(int x0, int y0, int x1, int y1) {
+void Brute(int x0, int y0, int x1, int y1) {
     int dx = x1 - x0;
     int dy = y1 - y0;
 
@@ -246,6 +263,54 @@ void BrutePure(int x0, int y0, int x1, int y1) {
     }
 }
 
+void BrutePure(int x0, int y0, int x1, int y1) {
+    int dx = x1 - x0;
+    int dy = y1 - y0;
+
+    // Si solo es un punto
+    if (dx == 0 && dy == 0) {
+        plotPure(x0, y0);
+        return;
+    }
+
+    // Si existe mayor cambio horizontal se recorre x
+    if (abs(dx) >= abs(dy)) {
+        // Se ve si se va a subir o bajar
+        int step_x = (dx > 0) ? 1 : -1;
+        //Se obtienen m y b
+        long double m = (long double)dy / (long double)dx;
+        long double b = (long double)y0 - m * (long double)x0;
+        // Se pintan los puntos
+        for (int x = x0; ; x += step_x) {
+            long double y = m * x + b;
+
+            plotPure(x, (int)roundl(y));
+
+            if (x == x1) {
+                break;
+            }
+        }
+    }
+
+    // Si existe mayor cambio vertical se recorre y
+    else {
+        // Se ve si se va a subir o bajar
+        int step_y = (dy > 0) ? 1 : -1;
+        // Se calcula la inversa de m
+        long double inverse_m =(long double)dx / (long double)dy;
+        // Se pintan los puntos
+        for (int y = y0; ; y += step_y) {
+            long double x = x0 + inverse_m * (y - y0);
+
+            plotPure((int)roundl(x), y);
+
+            if (y == y1) {
+                break;
+            }
+        }
+    }
+}
+
 // Algoritmos Incrementales
 int max(int a, int b){
   if (a>=b) return a;
@@ -261,7 +326,7 @@ void swapPoints(int *x0, int *y0, int *x1, int *y1){
   *y0 = tmp_y;
 }
 
-void IncrVerOnePure(int x0, int y0, int x1, int y1){
+void IncrVerOne(int x0, int y0, int x1, int y1){
   if (x0 == x1) {
     if (y1 < y0){
       int tmp = y1;
@@ -283,7 +348,7 @@ void IncrVerOnePure(int x0, int y0, int x1, int y1){
     long double y = y0;
     int x = x0;
     for (x = x0; x<= x1 ; x++){
-      plot(x, round(y));
+      plot(x, roundl(y));
       y += m;
     }
   }
@@ -294,13 +359,53 @@ void IncrVerOnePure(int x0, int y0, int x1, int y1){
     long double x = x0;
     m = (long double)(x1-x0)/(y1-y0);
     for (int y = y0; y<= y1 ; y++){
-      plot(round(x), y);
+      plot(roundl(x), y);
       x += m;
     }
   }
 }
 
-void IncrVerTwoPure(int x0, int y0, int x1, int y1) {
+
+void IncrVerOnePure(int x0, int y0, int x1, int y1){
+  if (x0 == x1) {
+    if (y1 < y0){
+      int tmp = y1;
+      y1 = y0;
+      y0 = tmp;
+    }
+    for (int y = y0 ; y <= y1; y++){
+      plotPure(x0,y);
+    }
+    return;
+  }
+  if (x1 < x0){
+    swapPoints(&x0, &y0, &x1, &y1);
+  }
+  
+  long double m = (long double)(y1-y0)/(x1-x0);
+  
+  if (fabsl(m) <= 1.0) {
+    long double y = y0;
+    int x = x0;
+    for (x = x0; x<= x1 ; x++){
+      plotPure(x, roundl(y));
+      y += m;
+    }
+  }
+  else{
+    if(y0 > y1) {
+      swapPoints(&x0, &y0, &x1, &y1);
+    }
+    long double x = x0;
+    m = (long double)(x1-x0)/(y1-y0);
+    for (int y = y0; y<= y1 ; y++){
+      plotPure(roundl(x), y);
+      x += m;
+    }
+  }
+}
+
+void IncrVerTwo(int x0, int y0, int x1, int y1) {
   long double x,y, paso_x, paso_y;
   int ancho;
   ancho = max(abs(x1-x0), abs(y1-y0));
@@ -315,7 +420,29 @@ void IncrVerTwoPure(int x0, int y0, int x1, int y1) {
   x = x0;
   y = y0;
   for (int i=0; i <= ancho; i++){
-    plot(round(x),round(y));
+    plot(roundl(x),roundl(y));
+    x += paso_x;
+    y += paso_y;
+  }
+}
+
+
+void IncrVerTwoPure(int x0, int y0, int x1, int y1) {
+  long double x,y, paso_x, paso_y;
+  int ancho;
+  ancho = max(abs(x1-x0), abs(y1-y0));
+  paso_x = (x1-x0)/ancho;
+  paso_y = (y1-y0)/ancho;
+  if (ancho == 0) {
+    plotPure(x0,y0);
+    return;
+  }
+  paso_x = (long double)(x1-x0)/ancho;
+  paso_y = (long double)(y1-y0)/ancho;
+  x = x0;
+  y = y0;
+  for (int i=0; i <= ancho; i++){
+    plotPure(roundl(x),roundl(y));
     x += paso_x;
     y += paso_y;
   }
@@ -387,6 +514,28 @@ void oct_1(int x0, int y0, int x1, int y1){
   } 
 }
 
+void oct_1Pure(int x0, int y0, int x1, int y1){
+  int Delta_E = 2*(y1 - y0);
+  int Delta_Ne = 2*((y1 - y0) - (x1 - x0));
+  
+  int xp = x0;
+  int yp = y0;
+  plotPure(xp,yp);
+  
+  int d = 2* (y1-y0) - (x1 - x0);
+  while(xp < x1){
+    if(d<=0){
+      xp++;
+      d = d + Delta_E;
+    }else{
+      xp++;
+      yp++;
+      d = d + Delta_Ne;
+    }
+    plotPure(xp,yp);
+  } 
+}
+
 void oct_2(int x0, int y0, int x1, int y1){
   int Delta_N = 2*(x0 - x1);
   int Delta_Ne = 2*((y1 - y0) - (x1 - x0));
@@ -406,6 +555,28 @@ void oct_2(int x0, int y0, int x1, int y1){
       d = d + Delta_N;
     }
     plot(xp,yp);
+  }
+}
+
+void oct_2Pure(int x0, int y0, int x1, int y1){
+  int Delta_N = 2*(x0 - x1);
+  int Delta_Ne = 2*((y1 - y0) - (x1 - x0));
+
+  int xp = x0;
+  int yp = y0;
+  plotPure(xp,yp);
+
+  int d = (y1-y0) - 2*(x1 - x0);
+  while(yp < y1){
+    if(d<=0){
+      xp++;
+      yp++;
+      d = d + Delta_Ne;
+    }else{
+      yp++;
+      d = d + Delta_N;
+    }
+    plotPure(xp,yp);
   }
 }
 
@@ -431,6 +602,28 @@ void oct_3(int x0, int y0, int x1, int y1){
   }
 }
 
+void oct_3Pure(int x0, int y0, int x1, int y1){
+  int Delta_N = 2*(x0 - x1);
+  int Delta_NO = 2*((y0 - y1) + (x0 - x1));
+
+  int xp = x0;
+  int yp = y0;
+  plotPure(xp,yp);
+
+  int d = (y0-y1) - 2*(x1 - x0);
+  while(yp < y1){
+    if(d<=0){
+      yp++;
+      d = d + Delta_N;
+    }else{
+      xp--;
+      yp++;
+      d = d + Delta_NO;
+    }
+    plotPure(xp,yp);
+  }
+}
+
 void oct_4(int x0, int y0, int x1, int y1){
   int Delta_O = 2*(y0 - y1);
   int Delta_NO = 2*((y0 - y1) + (x0 - x1));
@@ -450,6 +643,28 @@ void oct_4(int x0, int y0, int x1, int y1){
       d = d + Delta_O;
     }
     plot(xp,yp);
+  }
+}
+
+void oct_4Pure(int x0, int y0, int x1, int y1){
+  int Delta_O = 2*(y0 - y1);
+  int Delta_NO = 2*((y0 - y1) + (x0 - x1));
+
+  int xp = x0;
+  int yp = y0;
+  plotPure(xp,yp);
+
+  int d = 2*(y0-y1) - (x1 - x0);
+  while(xp > x1){
+    if(d<=0){
+      xp--;
+      yp++;
+      d = d + Delta_NO;
+    }else{
+      xp--;
+      d = d + Delta_O;
+    }
+    plotPure(xp,yp);
   }
 }
 
@@ -475,6 +690,28 @@ void oct_5(int x0, int y0, int x1, int y1){
   } 
 }
 
+void oct_5Pure(int x0, int y0, int x1, int y1){
+  int Delta_O = 2*(y1 - y0);
+  int Delta_SO =  2*((y1 - y0) - (x1 - x0));
+  
+  int xp = x0;
+  int yp = y0;
+  plotPure(xp,yp);
+  
+  int d = 2 * (y1-y0) - (x1 - x0);
+  while(xp > x1){
+    if(d>=0){
+      xp--;
+      d = d + Delta_O;
+    }else{
+      xp--;
+      yp--;
+      d = d + Delta_SO;
+    }
+    plotPure(xp,yp);
+  } 
+}
+
 void oct_6(int x0, int y0, int x1, int y1){
   int Delta_S = 2*(x0 - x1);
   int Delta_SO =  2*((x0 - x1) - (y0 - y1));
@@ -494,6 +731,28 @@ void oct_6(int x0, int y0, int x1, int y1){
       d = d + Delta_S;
     }
     plot(xp,yp);
+  } 
+}
+
+void oct_6Pure(int x0, int y0, int x1, int y1){
+  int Delta_S = 2*(x0 - x1);
+  int Delta_SO =  2*((x0 - x1) - (y0 - y1));
+  
+  int xp = x0;
+  int yp = y0;
+  plotPure(xp,yp);
+  
+  int d = 2 * (x0 - x1) - (y0-y1);
+  while(yp > y1){
+    if(d>=0){
+      yp--;
+      xp--;
+      d = d + Delta_SO;
+    }else{
+      yp--;
+      d = d + Delta_S;
+    }
+    plotPure(xp,yp);
   } 
 }
 
@@ -520,6 +779,29 @@ void oct_7(int x0, int y0, int x1, int y1){
   } 
 }
 
+void oct_7Pure(int x0, int y0, int x1, int y1){
+  int Delta_S = 2*(x1-x0);
+  int Delta_SE = 2*((x1-x0) - (y0 - y1));
+  
+  int xp = x0;
+  int yp = y0;
+  
+  plotPure(xp,yp);
+
+  int d = 2 * (x1 - x0) - (y0-y1);
+  while(yp > y1){
+    if(d>=0){
+      yp--;
+      xp++;
+      d = d + Delta_SE;
+    }else{
+      yp--;
+      d = d + Delta_S;
+    }
+    plotPure(xp,yp);
+  } 
+}
+
 void oct_8(int x0, int y0, int x1, int y1){
   int Delta_E = 2*(y0 - y1);
   int Delta_SE = 2*((y0-y1) - (x1 - x0));
@@ -543,6 +825,31 @@ void oct_8(int x0, int y0, int x1, int y1){
     plot(xp,yp);
   } 
 }
+
+void oct_8Pure(int x0, int y0, int x1, int y1){
+  int Delta_E = 2*(y0 - y1);
+  int Delta_SE = 2*((y0-y1) - (x1 - x0));
+  
+  int xp = x0;
+  int yp = y0;
+
+  plotPure(xp,yp);
+
+  int d = 2 * (y0-y1) - (x1 - x0);
+
+  while(xp < x1){
+    if(d <= 0){
+      xp++;
+      d = d + Delta_E;
+    }else{
+      xp++;
+      yp--;
+      d = d + Delta_SE;
+    }
+    plotPure(xp,yp);
+  } 
+}
+
 
 // Correr el octante necesario en NASM
 int BresenhamNASM(int x0, int y0, int x1, int y1) {
@@ -579,6 +886,47 @@ int BresenhamNASM(int x0, int y0, int x1, int y1) {
 
         case 8:
             oct8(x0, y0, x1, y1);
+            return 1;
+
+        default:
+            return 0;
+    }
+}
+
+int BresenhamNASMPure(int x0, int y0, int x1, int y1) {
+    int octant = classify_octant(x0, y0, x1, y1);
+
+    switch (octant) {
+        case 1:
+            oct1_pure(x0, y0, x1, y1);
+            return 1;
+
+        case 2:
+            oct2_pure(x0, y0, x1, y1);
+            return 1;
+
+        case 3:
+            oct3_pure(x0, y0, x1, y1);
+            return 1;
+
+        case 4:
+            oct4_pure(x0, y0, x1, y1);
+            return 1;
+
+        case 5:
+            oct5_pure(x0, y0, x1, y1);
+            return 1;
+        
+        case 6:
+            oct6_pure(x0, y0, x1, y1);
+            return 1;
+        
+        case 7:
+            oct7_pure(x0, y0, x1, y1);
+            return 1;
+
+        case 8:
+            oct8_pure(x0, y0, x1, y1);
             return 1;
 
         default:
@@ -627,8 +975,60 @@ int BresenhamC(int x0, int y0, int x1, int y1) {
     }
 }
 
+int BresenhamCPure(int x0, int y0, int x1, int y1) {
+    int octant = classify_octant(x0, y0, x1, y1);
+
+    switch (octant) {
+        case 1:
+            oct_1Pure(x0, y0, x1, y1);
+            return 1;
+
+        case 2:
+            oct_2Pure(x0, y0, x1, y1);
+            return 1;
+
+        case 3:
+            oct_3Pure(x0, y0, x1, y1);
+            return 1;
+
+        case 4:
+            oct_4Pure(x0, y0, x1, y1);
+            return 1;
+
+        case 5:
+            oct_5Pure(x0, y0, x1, y1);
+            return 1;
+        
+        case 6:
+            oct_6Pure(x0, y0, x1, y1);
+            return 1;
+        
+        case 7:
+            oct_7Pure(x0, y0, x1, y1);
+            return 1;
+
+        case 8:
+            oct_8Pure(x0, y0, x1, y1);
+            return 1;
+
+        default:
+            return 0;
+    }
+}
+
 // Mostrar lineas - Fuerza bruta
 void emit_brute_lines(void) {
+    for (int i = 0; i < lines_num; i++) {
+        Brute(
+            lines[i].x0,
+            lines[i].y0,
+            lines[i].x1,
+            lines[i].y1
+        );
+    }
+}
+
+void emit_brutePure_lines(void) {
     for (int i = 0; i < lines_num; i++) {
         BrutePure(
             lines[i].x0,
@@ -642,6 +1042,17 @@ void emit_brute_lines(void) {
 // Mostrar lineas - Inc Ver 1
 void emit_inc_ver1_lines(void) {
     for (int i = 0; i < lines_num; i++) {
+        IncrVerOne(
+            lines[i].x0,
+            lines[i].y0,
+            lines[i].x1,
+            lines[i].y1
+        );
+    }
+}
+
+void emit_inc_ver1Pure_lines(void) {
+    for (int i = 0; i < lines_num; i++) {
         IncrVerOnePure(
             lines[i].x0,
             lines[i].y0,
@@ -653,6 +1064,17 @@ void emit_inc_ver1_lines(void) {
 
 // Mostrar lineas - Inc Ver 2
 void emit_inc_ver2_lines(void) {
+    for (int i = 0; i < lines_num; i++) {
+        IncrVerTwo(
+            lines[i].x0,
+            lines[i].y0,
+            lines[i].x1,
+            lines[i].y1
+        );
+    }
+}
+
+void emit_inc_ver2Pure_lines(void) {
     for (int i = 0; i < lines_num; i++) {
         IncrVerTwoPure(
             lines[i].x0,
@@ -675,10 +1097,32 @@ void emit_bresenham_lines(void) {
     }
 }
 
+void emit_bresenhamPure_lines(void) {
+    for (int i = 0; i < lines_num; i++) {
+        BresenhamCPure(
+            lines[i].x0,
+            lines[i].y0,
+            lines[i].x1,
+            lines[i].y1
+        );
+    }
+}
+
 // Mostrar lineas - Bresenham NASM
 void emit_nasm_lines(void) {
     for (int i = 0; i < lines_num; i++) {
         BresenhamNASM(
+            lines[i].x0,
+            lines[i].y0,
+            lines[i].x1,
+            lines[i].y1
+        );
+    }
+}
+
+void emit_nasmPure_lines(void) {
+    for (int i = 0; i < lines_num; i++) {
+        BresenhamNASMPure(
             lines[i].x0,
             lines[i].y0,
             lines[i].x1,
@@ -713,6 +1157,34 @@ double benchmark_brute_graphics(void) {
     return elapsed_time(start, end);
 }
 
+double benchmark_brutePure_graphics(void) {
+    struct timespec start;
+    struct timespec end;
+
+    // Espera cualquier trabajo anterior antes de comenzar a medir
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    glBegin(GL_POINTS);
+
+    for (int repetition = 0; repetition < quantity; repetition++) {
+
+        emit_brutePure_lines();
+    }
+
+    glEnd();
+    // Garantiza que OpenGL terminó de procesar todos los puntos
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    return elapsed_time(start, end);
+}
+
+// Medir tiempo - Inc Ver1
+
+
 // Medir tiempo - Inc Ver 1
 double benchmark_inc_ver1_graphics(void) {
     struct timespec start;
@@ -739,6 +1211,31 @@ double benchmark_inc_ver1_graphics(void) {
     return elapsed_time(start, end);
 }
 
+double benchmark_inc_ver1Pure_graphics(void) {
+    struct timespec start;
+    struct timespec end;
+
+    // Espera cualquier trabajo anterior antes de comenzar a medir
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    glBegin(GL_POINTS);
+
+    for (int repetition = 0; repetition < quantity; repetition++) {
+
+        emit_inc_ver1Pure_lines();
+    }
+
+    glEnd();
+    // Garantiza que OpenGL terminó de procesar todos los puntos
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    return elapsed_time(start, end);
+}
+
 // Medir tiempo - Inc Ver 2
 double benchmark_inc_ver2_graphics(void) {
     struct timespec start;
@@ -754,6 +1251,31 @@ double benchmark_inc_ver2_graphics(void) {
     for (int repetition = 0; repetition < quantity; repetition++) {
 
         emit_inc_ver2_lines();
+    }
+
+    glEnd();
+    // Garantiza que OpenGL terminó de procesar todos los puntos
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    return elapsed_time(start, end);
+}
+
+double benchmark_inc_ver2Pure_graphics(void) {
+    struct timespec start;
+    struct timespec end;
+
+    // Espera cualquier trabajo anterior antes de comenzar a medir
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    glBegin(GL_POINTS);
+
+    for (int repetition = 0; repetition < quantity; repetition++) {
+
+        emit_inc_ver2Pure_lines();
     }
 
     glEnd();
@@ -793,6 +1315,33 @@ double benchmark_bresenham_graphics(void) {
     return elapsed_time(start, end);
 }
 
+double benchmark_bresenhamPure_graphics(void) {
+    struct timespec start;
+    struct timespec end;
+
+    // Espera cualquier trabajo anterior antes de comenzar a medir
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    glBegin(GL_POINTS);
+
+    for (int repetition = 0;
+         repetition < quantity;
+         repetition++) {
+
+        emit_bresenhamPure_lines();
+    }
+
+    glEnd();
+    // Garantiza que OpenGL terminó de procesar todos los puntos
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    return elapsed_time(start, end);
+}
+
 // Medir tiempo - Bresenham NASM
 double benchmark_nasm_graphics(void) {
     struct timespec start;
@@ -810,6 +1359,33 @@ double benchmark_nasm_graphics(void) {
          repetition++) {
 
         emit_nasm_lines();
+    }
+
+    glEnd();
+    // Garantiza que OpenGL terminó de procesar todos los puntos
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    return elapsed_time(start, end);
+}
+
+double benchmark_nasmPure_graphics(void) {
+    struct timespec start;
+    struct timespec end;
+
+    // Espera cualquier trabajo anterior antes de comenzar a medir
+    glFinish();
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    glBegin(GL_POINTS);
+
+    for (int repetition = 0;
+         repetition < quantity;
+         repetition++) {
+
+        emit_nasmPure_lines();
     }
 
     glEnd();
@@ -872,7 +1448,16 @@ void draw_scene(void) {
             inc_ver1_time
         );
 
+        double inc_ver1Pure_time =
+            benchmark_brutePure_graphics();
+        printf(
+            "Incremental Version 1 sin dibujo(Puro): %.9f segundos\n",
+            inc_ver1Pure_time
+        );
+
         inc_ver_one_measured = 1;
+
+        
 
         // Tiempo de espera
         glutTimerFunc(2000, advance_stage, 0);
@@ -899,6 +1484,14 @@ void draw_scene(void) {
         printf(
             "Incremental Version 2 con dibujo: %.9f segundos\n",
             inc_ver2_time
+        );
+
+        double inc_ver2Pure_time =
+            benchmark_inc_ver2Pure_graphics();
+
+        printf(
+            "Incremental Version 2 sin dibujo(Pure): %.9f segundos\n",
+            inc_ver2Pure_time
         );
 
         inc_ver_two_measured = 1;
@@ -930,6 +1523,15 @@ void draw_scene(void) {
             bresenham_c_time
         );
 
+        double bresenhamPure_c_time =
+            benchmark_bresenhamPure_graphics();
+
+        printf(
+            "Bresenham C sin dibujo (Pure): %.9f segundos\n",
+            bresenhamPure_c_time
+        );
+
+
         bresenham_c_measured = 1;
 
         // Tiempo de espera
@@ -956,6 +1558,14 @@ void draw_scene(void) {
         printf(
             "Bresenham NASM con dibujo: %.9f segundos\n",
             nasm_time
+        );
+
+        double nasmPure_time =
+            benchmark_nasmPure_graphics();
+
+        printf(
+            "Bresenham NASM sin dibujo(Pure): %.9f segundos\n",
+            nasmPure_time
         );
 
         nasm_measured = 1;
