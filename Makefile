@@ -1,7 +1,7 @@
 CC = gcc
 NASM = nasm
 
-OBJECTS = proyecto.o bresenham.o
+OBJECTS = proyecto.o plots.o bresenham.o
 OUTPUT = proyecto
 
 CFLAGS = -std=c11 -Wall -Wextra -O2 \
@@ -15,7 +15,7 @@ LDFLAGS = -no-pie \
 
 LDLIBS = -lglut -lGLU -lGL -lm
 
-.PHONY: all clean run
+.PHONY: all clean
 
 all: $(OUTPUT)
 
@@ -25,11 +25,11 @@ $(OUTPUT): $(OBJECTS)
 proyecto.o: proyecto.c
 	$(CC) $(CFLAGS) -c proyecto.c -o proyecto.o
 
+plots.o: plots.c
+	$(CC) $(CFLAGS) -c plots.c -o plots.o
+
 bresenham.o: bresenham.asm
 	$(NASM) $(NASMFLAGS) bresenham.asm -o bresenham.o
-
-run: $(OUTPUT)
-	./$(OUTPUT) 256 100 500
 
 clean:
 	rm -f $(OBJECTS) $(OUTPUT)

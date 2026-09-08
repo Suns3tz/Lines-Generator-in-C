@@ -171,15 +171,6 @@ void generate_lines(void) {
     }
 }
 
-// Dibujar pixeles
-void plot(int col, int row) {
-    glVertex2f(col + 0.5f, row + 0.5f);
-}
-
-void plotPure(int col, int row) {
-    return;
-}
-
 // Redimensionar
 void reshape(int width, int height) {
     glViewport(0, 0, width, height);
@@ -1417,6 +1408,12 @@ void draw_scene(void) {
             "Fuerza Bruta con dibujo: %.9f segundos\n",
             brute_time
         );
+        double brutePure_time =
+            benchmark_brutePure_graphics();
+        printf(
+            "Fuerza Bruta sin dibujo(Puro): %.9f segundos\n",
+            brutePure_time
+        );
 
         brute_measured = 1;
 
@@ -1449,15 +1446,13 @@ void draw_scene(void) {
         );
 
         double inc_ver1Pure_time =
-            benchmark_brutePure_graphics();
+            benchmark_inc_ver1Pure_graphics();
         printf(
             "Incremental Version 1 sin dibujo(Puro): %.9f segundos\n",
             inc_ver1Pure_time
         );
 
         inc_ver_one_measured = 1;
-
-        
 
         // Tiempo de espera
         glutTimerFunc(2000, advance_stage, 0);
